@@ -49,13 +49,13 @@ export async function generateMetadata(
   return {
     title: `${Portfolio.title} | portfolios`,
     description:
-      Portfolio.excerpt || `Learn more about my Portfolio: ${Portfolio.title}`,
+      Portfolio.excerpt || `Learn more about Our Portfolio: ${Portfolio.title}`,
     keywords: Portfolio.technologies?.join(", ") || "",
     openGraph: {
       title: Portfolio.title,
       description:
         Portfolio.excerpt ||
-        `Learn more about my Portfolio: ${Portfolio.title}`,
+        `Learn more about Our Portfolio: ${Portfolio.title}`,
       type: "website",
       url: Portfolio.liveUrl || undefined,
       images: Portfolio.featuredImage
@@ -75,7 +75,7 @@ export async function generateMetadata(
       title: Portfolio.title,
       description:
         Portfolio.excerpt ||
-        `Learn more about my Portfolio: ${Portfolio.title}`,
+        `Learn more about Our Portfolio: ${Portfolio.title}`,
       images: Portfolio.featuredImage ? [Portfolio.featuredImage] : undefined,
     },
   };

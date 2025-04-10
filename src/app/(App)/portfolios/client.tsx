@@ -55,7 +55,7 @@ export default function PortfoliosClient() {
     return (
       <main className='container py-24 space-y-8'>
         <div className='flex flex-col items-center text-center space-y-4'>
-          <h1 className='text-4xl font-bold'>My portfolios</h1>
+          <h1 className='text-4xl font-bold'>Our portfolios</h1>
           <p className='text-xl text-red-500'>
             Error loading portfolios. Please try again later.
           </p>
@@ -69,9 +69,9 @@ export default function PortfoliosClient() {
   return (
     <main className='container py-24 space-y-8'>
       <div className='flex flex-col items-center text-center space-y-4'>
-        <h1 className='text-4xl font-bold'>My portfolios</h1>
+        <h1 className='text-4xl font-bold'>Our portfolios</h1>
         <p className='text-xl text-muted-foreground max-w-2xl'>
-          A collection of portfolios I{"'"}ve worked on, from web applications
+          A collection of portfolios we{"'"}ve worked on, from web applications
           to AI experiments
         </p>
       </div>
