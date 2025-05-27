@@ -58,8 +58,8 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
     try {
       const response = await fetch("/api/client")
       if (!response.ok) throw new Error("Failed to fetch clients")
-      const data = await response.json()
-      setClients(data)
+      const json = await response.json()
+      setClients(Array.isArray(json.data) ? json.data : [])
     } catch (error) {
       toast({
         title: "Error",
