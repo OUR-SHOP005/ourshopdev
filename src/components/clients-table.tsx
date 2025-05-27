@@ -34,7 +34,8 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
       setLoading(true)
       const response = await fetch("/api/client")
       if (!response.ok) throw new Error("Failed to fetch clients")
-      const data = await response.json()
+      const json = await response.json()
+      const data = json.data
       setClients(Array.isArray(data) ? data : [])
     } catch (error) {
       toast({
