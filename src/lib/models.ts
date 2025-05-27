@@ -8,6 +8,8 @@ import {
   IMarketingMail,
   ISEO,
   IService,
+  IBillingRecord,
+  IClient,
 } from "./types";
 
 const DEFAULT_IMG =
@@ -296,6 +298,138 @@ const ServiceSchema = new mongoose.Schema<IService>({
 ServiceSchema.index({ name: 1 });
 ServiceSchema.index({ featured: 1 });
 
+// Client Schema
+const ClientSchema = new mongoose.Schema<IClient>({
+  // Basic Identity
+  name: { type: String, required: true, trim: true, index: true },
+  companyName: { type: String, trim: true },
+  email: { type: String, required: true, trim: true, lowercase: true, index: true },
+  phone: { type: String, trim: true },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    country: String,
+    postalCode: String,
+  },
+  // Point of Contact
+  pointOfContact: {
+    name: String,
+    role: String,
+    phone: String,
+    email: String,
+  },
+  // Website Metadata
+  website: {
+    url: { type: String, trim: true },
+    stack: [String],
+    domainProvider: String,
+    hostingProvider: String,
+    domainExpiry: Date,
+    mailAddress: String,
+    mailExpiry: Date,
+    status: { 
+      type: String, 
+      enum: ['live', 'maintenance', 'offline', 'development'], 
+      default: 'development' 
+    },
+    lastUpdated: Date,
+  },
+  // Services Offered
+  services: [{
+    type: String,
+    enum: ['design', 'development', 'SEO', 'maintenance', 'hosting', 'domain', 'analytics', 'ecommerce', 'consultation'],
+    index: true
+  }],
+  // Social Profiles
+  social: [{
+    platform: String,
+    url: String
+  }],
+  // Billing Setup
+  billingPlan: {
+    model: { 
+      type: String, 
+      enum: ['monthly', 'one-time', 'retainer'] 
+    },
+    amount: Number,
+    currency: { type: String, default: 'INR' },
+    nextDue: Date,
+  },
+  // Billing History
+  billingHistory: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BillingRecord'
+  }],
+  // Lifecycle Status
+  status: {
+    type: String,
+    enum: ['lead', 'onboarding', 'active', 'paused', 'inactive'],
+    default: 'lead',
+    index: true
+  },
+  // Internal Notes
+  notes: { type: String, maxlength: 5000 },
+  // Tags
+  tags: [String],
+  // Timestamps
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Billing Record Schema
+const BillingRecordSchema = new mongoose.Schema<IBillingRecord>({
+  clientId: { 
+    type: String,
+    required: true, 
+    index: true,
+    ref: 'Client'
+  },
+  invoiceNumber: { 
+    type: String, 
+    required: true, 
+    unique: true, 
+    index: true 
+  },
+  amount: { 
+    type: Number, 
+    required: true, 
+    min: 0 
+  },
+  currency: { 
+    type: String, 
+    default: 'INR' 
+  },
+  servicesBilled: [{
+    service: {
+      type: String,
+      enum: ['design', 'development', 'SEO', 'maintenance', 'hosting', 'domain', 'analytics', 'ecommerce', 'other'],
+    },
+    description: String,
+    cost: Number
+  }],
+  billDate: { type: Date, default: Date.now },
+  dueDate: { type: Date },
+  paymentStatus: {
+    type: String,
+    enum: ['paid', 'unpaid', 'overdue', 'cancelled'],
+    default: 'unpaid',
+    index: true
+  },
+  paymentMethod: { type: String },
+  transactionId: { type: String },
+  notes: { type: String, maxlength: 2000 },
+  billPdfUrl: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Add indexes
+ClientSchema.index({ email: 1 });
+ClientSchema.index({ companyName: 1 });
+ClientSchema.index({ 'website.url': 1 });
+BillingRecordSchema.index({ clientId: 1, billDate: -1 });
+
 // Export models
 export const Portfolio =
   mongoose.models.Portfolio ||
@@ -324,3 +458,9 @@ export const MarketingMail =
 
 export const Service =
   mongoose.models.Service || mongoose.model<IService>("Service", ServiceSchema);
+
+export const Client =
+  mongoose.models.Client || mongoose.model<IClient>("Client", ClientSchema);
+
+export const BillingRecord =
+  mongoose.models.BillingRecord || mongoose.model<IBillingRecord>("BillingRecord", BillingRecordSchema);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import mongoose from "mongoose";
 
 // Interfaces
 export interface ISEO {
@@ -412,3 +413,161 @@ export const ServiceRequestSchema = ServiceSchema.omit({
 
 // Add ServiceFormData type
 export type ServiceFormData = Omit<IService, "_id" | "createdAt" | "updatedAt">;
+
+// BillingRecord Schema
+export interface IBillingRecord {
+  _id?: string;
+  clientId: mongoose.Types.ObjectId | string;
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  servicesBilled: Array<{
+    service: 'design' | 'development' | 'SEO' | 'maintenance' | 'hosting' | 'domain' | 'analytics' | 'ecommerce' | 'other';
+    description: string;
+    cost: number;
+  }>;
+  billDate: Date;
+  dueDate?: Date;
+  paymentStatus: 'paid' | 'unpaid' | 'overdue' | 'cancelled';
+  paymentMethod?: string;
+  transactionId?: string;
+  notes?: string;
+  billPdfUrl: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Client Schema
+export interface IClient {
+  _id?: string;
+  // Basic Identity
+  name: string;
+  companyName?: string;
+  email: string;
+  phone?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postalCode?: string;
+  };
+  // Point of Contact
+  pointOfContact?: {
+    name?: string;
+    role?: string;
+    phone?: string;
+    email?: string;
+  };
+  // Website Metadata
+  website?: {
+    url?: string;
+    stack?: string[];
+    domainProvider?: string;
+    hostingProvider?: string;
+    domainExpiry?: Date;
+    mailAddress?: string;
+    mailExpiry?: Date;
+    status?: 'live' | 'maintenance' | 'offline' | 'development';
+    lastUpdated?: Date;
+  };
+  // Services Offered
+  services?: Array<'design' | 'development' | 'SEO' | 'maintenance' | 'hosting' | 'domain' | 'analytics' | 'ecommerce' | 'consultation'>;
+  // Social Profiles
+  social?: Array<{
+    platform: string;
+    url: string;
+  }>;
+  // Billing Setup
+  billingPlan?: {
+    model?: 'monthly' | 'one-time' | 'retainer';
+    amount?: number;
+    currency?: string;
+    nextDue?: Date;
+  };
+  // Billing History
+  billingHistory?: Array<mongoose.Types.ObjectId | string>;
+  // Lifecycle Status
+  status?: 'lead' | 'onboarding' | 'active' | 'paused' | 'inactive';
+  // Internal Notes
+  notes?: string;
+  // Tags
+  tags?: string[];
+  // Timestamps
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Zod Schemas for BillingRecord and Client
+export const BillingRecordSchema = z.object({
+  _id: z.string().optional(),
+  clientId: z.string(),
+  invoiceNumber: z.string(),
+  amount: z.number().min(0, "Amount must be a positive number"),
+  currency: z.string().default("INR"),
+  servicesBilled: z.array(z.object({
+    service: z.enum(["design", "development", "SEO", "maintenance", "hosting", "domain", "analytics", "ecommerce", "other"]),
+    description: z.string(),
+    cost: z.number()
+  })),
+  billDate: z.date().default(() => new Date()),
+  dueDate: z.date().optional(),
+  paymentStatus: z.enum(["paid", "unpaid", "overdue", "cancelled"]).default("unpaid"),
+  paymentMethod: z.string().optional(),
+  transactionId: z.string().optional(),
+  notes: z.string().max(2000).optional(),
+  billPdfUrl: z.string(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional()
+});
+
+export const ClientSchema = z.object({
+  _id: z.string().optional(),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  companyName: z.string().optional(),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  address: z.object({
+    street: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    postalCode: z.string().optional()
+  }).optional(),
+  pointOfContact: z.object({
+    name: z.string().optional(),
+    role: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email("Invalid email address").optional()
+  }).optional(),
+  website: z.object({
+    url: z.string().optional(),
+    stack: z.array(z.string()).optional(),
+    domainProvider: z.string().optional(),
+    hostingProvider: z.string().optional(),
+    domainExpiry: z.date().optional(),
+    mailAddress: z.string().optional(),
+    mailExpiry: z.date().optional(),
+    status: z.enum(["live", "maintenance", "offline", "development"]).default("development"),
+    lastUpdated: z.date().optional()
+  }).optional(),
+  services: z.array(z.enum([
+    "design", "development", "SEO", "maintenance", "hosting", "domain", "analytics", "ecommerce", "consultation"
+  ])).optional(),
+  social: z.array(z.object({
+    platform: z.string(),
+    url: z.string()
+  })).optional(),
+  billingPlan: z.object({
+    model: z.enum(["monthly", "one-time", "retainer"]).optional(),
+    amount: z.number().optional(),
+    currency: z.string().default("INR"),
+    nextDue: z.date().optional()
+  }).optional(),
+  billingHistory: z.array(z.string()).optional(),
+  status: z.enum(["lead", "onboarding", "active", "paused", "inactive"]).default("lead"),
+  notes: z.string().max(5000).optional(),
+  tags: z.array(z.string()).optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional()
+});
