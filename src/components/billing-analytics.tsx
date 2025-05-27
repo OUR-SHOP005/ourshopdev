@@ -35,8 +35,8 @@ export function BillingAnalytics() {
 
       if (billingResponse.ok && clientsResponse.ok) {
         const [billingData, clientsData] = await Promise.all([billingResponse.json(), clientsResponse.json()])
-        setBillingRecords(billingData)
-        setClients(clientsData)
+        setBillingRecords(billingData.data)
+        setClients(clientsData.data)
       }
     } catch (error) {
       console.error("Failed to fetch analytics data:", error)

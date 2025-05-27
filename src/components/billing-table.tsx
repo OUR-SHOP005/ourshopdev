@@ -44,8 +44,8 @@ export function BillingTable({ refreshTrigger }: BillingTableProps) {
 
       const [billingData, clientsData] = await Promise.all([billingResponse.json(), clientsResponse.json()])
 
-      setBillingRecords(billingData)
-      setClients(clientsData)
+      setBillingRecords(billingData.data)
+      setClients(clientsData.data)
     } catch (error) {
       toast({
         title: "Error",
