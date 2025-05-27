@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Delete the client
-    await Client.findByIdAndDelete(params.id)
+    await Client.findByIdAndDelete((await params).id)
 
     return NextResponse.json({ message: "Client and related records deleted successfully" })
   } catch (error) {
