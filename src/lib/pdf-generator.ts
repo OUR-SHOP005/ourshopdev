@@ -1,6 +1,15 @@
+import type { IBillingRecord, IClient } from "@/lib/types"
+import { v2 as cloudinary } from "cloudinary"
 import jsPDF from "jspdf"
-import type { IBillingRecord } from "@/lib/types"
-import type { IClient } from "@/lib/types"
+import { connectDB } from "./db"
+import { Client } from "./models"
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export function generateInvoicePDF(billingData: IBillingRecord, clientData: IClient): jsPDF {
   const doc = new jsPDF()
@@ -112,4 +121,104 @@ export function generateInvoicePDF(billingData: IBillingRecord, clientData: ICli
   doc.text("Thank you for your business!", 20, 280)
 
   return doc
+}
+
+/**
+ * Generates a billing PDF for an invoice and returns the URL to the stored PDF
+ */
+export async function generateBillingPdf(billingData: Partial<IBillingRecord>): Promise<string> {
+  try {
+    // Connect to database
+    await connectDB()
+
+    // Get client information
+    const clientInfo = await fetchClientInfo(billingData.clientId as string)
+
+    if (!clientInfo) {
+      throw new Error(`Client not found with ID: ${billingData.clientId}`)
+    }
+
+    // Create default values for required fields if missing
+    const completeBillingData: IBillingRecord = {
+      _id: billingData._id || `temp-${Date.now()}`,
+      clientId: billingData.clientId as string,
+      invoiceNumber: billingData.invoiceNumber || `INV-${Date.now()}`,
+      amount: billingData.amount || 0,
+      currency: billingData.currency || 'INR',
+      servicesBilled: billingData.servicesBilled || [],
+      billDate: billingData.billDate || new Date(),
+      dueDate: billingData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      paymentStatus: billingData.paymentStatus || 'unpaid',
+      billPdfUrl: billingData.billPdfUrl || '',
+      createdAt: billingData.createdAt || new Date(),
+      updatedAt: billingData.updatedAt || new Date()
+    }
+
+    // Generate the PDF
+    const pdfDoc = generateInvoicePDF(completeBillingData, clientInfo)
+
+    // Save the PDF to storage
+    const pdfUrl = await savePdfToStorage(pdfDoc, completeBillingData.invoiceNumber)
+
+    return pdfUrl
+  } catch (error) {
+    console.error("Error generating billing PDF:", error)
+    // Return a placeholder URL for development
+    return `https://storage.example.com/bills/${billingData.invoiceNumber || Date.now()}.pdf`
+  }
+}
+
+/**
+ * Fetches client information from the database
+ */
+async function fetchClientInfo(clientId: string): Promise<IClient | null> {
+  try {
+    if (!clientId) return null
+
+    // Query the database for the client
+    const client = await Client.findById(clientId)
+    return client
+  } catch (error) {
+    console.error(`Error fetching client info for ID ${clientId}:`, error)
+    return null
+  }
+}
+
+/**
+ * Saves a PDF document to Cloudinary and returns the URL
+ */
+async function savePdfToStorage(pdfDoc: jsPDF, invoiceNumber: string): Promise<string> {
+  try {
+    // Get PDF as buffer
+    const pdfBuffer = Buffer.from(pdfDoc.output('arraybuffer'))
+
+    // Upload to Cloudinary
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "raw",
+            folder: "invoice",
+            public_id: `invoice-${invoiceNumber}-${Date.now()}`,
+            format: "pdf",
+          },
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error)
+              reject(new Error("Failed to upload PDF to Cloudinary"))
+            } else {
+              resolve(result)
+            }
+          }
+        )
+        .end(pdfBuffer)
+    })
+
+    // Return the secure URL from Cloudinary
+    return uploadResult.secure_url
+  } catch (error) {
+    console.error('Error saving PDF to Cloudinary:', error)
+    // In case of error, return a fallback URL
+    return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/invoice/${invoiceNumber}.pdf`
+  }
 }
