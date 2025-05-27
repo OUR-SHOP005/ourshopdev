@@ -2,10 +2,10 @@ import { connectDB } from "@/lib/db"
 import { BillingRecord } from "@/lib/models"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
-    const billingRecord = await BillingRecord.findById(params.id)
+    const billingRecord = await BillingRecord.findById((await params).id)
 
     if (!billingRecord) {
       return NextResponse.json({ error: "Billing record not found" }, { status: 404 })
@@ -18,13 +18,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
     const updates = await request.json()
 
     const updatedRecord = await BillingRecord.findByIdAndUpdate(
-      params.id,
+      (await params).id,
       { ...updates, updatedAt: new Date() },
       { new: true, runValidators: true }
     )
@@ -40,10 +40,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
-    const deletedRecord = await BillingRecord.findByIdAndDelete(params.id)
+    const deletedRecord = await BillingRecord.findByIdAndDelete((await params).id)
 
     if (!deletedRecord) {
       return NextResponse.json({ error: "Billing record not found" }, { status: 404 })

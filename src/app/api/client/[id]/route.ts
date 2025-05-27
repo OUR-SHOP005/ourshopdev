@@ -2,10 +2,10 @@ import { connectDB } from "@/lib/db"
 import { BillingRecord, Client } from "@/lib/models"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
-    const client = await Client.findById(params.id)
+    const client = await Client.findById((await params).id)
 
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
     const clientData = await request.json()
@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     clientData.updatedAt = new Date()
 
     const updatedClient = await Client.findByIdAndUpdate(
-      params.id,
+      (await params).id,
       clientData,
       { new: true, runValidators: true }
     )
