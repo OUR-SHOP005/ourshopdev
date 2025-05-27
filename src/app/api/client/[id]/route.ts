@@ -43,12 +43,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB()
 
     // First check if client exists
-    const client = await Client.findById(params.id)
+    const client = await Client.findById((await params).id)
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
