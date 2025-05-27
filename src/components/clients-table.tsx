@@ -35,13 +35,14 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
       const response = await fetch("/api/client")
       if (!response.ok) throw new Error("Failed to fetch clients")
       const data = await response.json()
-      setClients(data)
+      setClients(Array.isArray(data) ? data : [])
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to fetch clients",
         variant: "destructive",
       })
+      setClients([])
     } finally {
       setLoading(false)
     }
@@ -86,7 +87,10 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
   }
 
   const filteredAndSortedClients = useMemo(() => {
-    const filtered = clients.filter((client) => {
+    // Ensure clients is an array before filtering
+    const clientsArray = Array.isArray(clients) ? clients : [];
+
+    const filtered = clientsArray.filter((client) => {
       if (!client) return false;
 
       const matchesSearch =
