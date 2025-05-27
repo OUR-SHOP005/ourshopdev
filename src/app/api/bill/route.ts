@@ -8,9 +8,11 @@ export async function POST(request: NextRequest) {
 
     // Save billing record
     const savedBillingRecord = await mockBillingApi.saveBillingRecord(billingData)
-
+    const client = await mockApi.getClient(billingData.clientId)
     // Add billing record to client's billing history
-    await mockApi.addBillingToClient(billingData.clientId, savedBillingRecord._id!)
+    await mockApi.updateClient(billingData.clientId, {
+      billingHistory: [...(client?.billingHistory || []), savedBillingRecord._id!],
+    })
 
     return NextResponse.json(savedBillingRecord, { status: 201 })
   } catch (error) {

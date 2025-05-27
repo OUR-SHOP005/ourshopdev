@@ -1,12 +1,12 @@
-import type { BillingRecord } from "@/types/billing"
+import type { IBillingRecord } from "@/lib/types"
 
 // Mock billing records store
-const billingRecords: BillingRecord[] = []
+const billingRecords: IBillingRecord[] = []
 
 export const mockBillingApi = {
   // Generate PDF and return URL
   generateBillingPdf: async (
-    billingData: Omit<BillingRecord, "_id" | "billPdfUrl" | "createdAt" | "updatedAt">,
+    billingData: Omit<IBillingRecord, "_id" | "billPdfUrl" | "createdAt" | "updatedAt">,
   ): Promise<string> => {
     await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulate PDF generation delay
 
@@ -18,11 +18,11 @@ export const mockBillingApi = {
 
   // Save billing record
   saveBillingRecord: async (
-    billingData: Omit<BillingRecord, "_id" | "createdAt" | "updatedAt">,
-  ): Promise<BillingRecord> => {
+    billingData: Omit<IBillingRecord, "_id" | "createdAt" | "updatedAt">,
+  ): Promise<IBillingRecord> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    const newBillingRecord: BillingRecord = {
+    const newBillingRecord: IBillingRecord = {
       ...billingData,
       _id: Date.now().toString(),
       createdAt: new Date(),
@@ -34,19 +34,19 @@ export const mockBillingApi = {
   },
 
   // Get billing records for a client
-  getBillingRecords: async (clientId: string): Promise<BillingRecord[]> => {
+  getBillingRecords: async (clientId: string): Promise<IBillingRecord[]> => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     return billingRecords.filter((record) => record.clientId === clientId)
   },
 
   // Get all billing records
-  getAllBillingRecords: async (): Promise<BillingRecord[]> => {
+  getAllBillingRecords: async (): Promise<IBillingRecord[]> => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     return [...billingRecords]
   },
 
   // Update billing record
-  updateBillingRecord: async (id: string, updates: Partial<BillingRecord>): Promise<BillingRecord> => {
+  updateBillingRecord: async (id: string, updates: Partial<IBillingRecord>): Promise<IBillingRecord> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const index = billingRecords.findIndex((record) => record._id === id)

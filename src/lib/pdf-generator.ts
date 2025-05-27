@@ -1,8 +1,8 @@
 import jsPDF from "jspdf"
-import type { BillingRecord } from "@/types/billing"
-import type { Client } from "@/types/client"
+import type { IBillingRecord } from "@/lib/types"
+import type { IClient } from "@/lib/types"
 
-export function generateInvoicePDF(billingData: BillingRecord, clientData: Client): jsPDF {
+export function generateInvoicePDF(billingData: IBillingRecord, clientData: IClient): jsPDF {
   const doc = new jsPDF()
 
   // Company Header

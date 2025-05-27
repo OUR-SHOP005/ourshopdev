@@ -1,7 +1,7 @@
-import type { Client } from "@/types/client"
+import type { IClient } from "@/lib/types"
 
 // Mock data store
-const clients: Client[] = [
+const clients: IClient[] = [
   {
     _id: "1",
     name: "John Doe",
@@ -69,15 +69,15 @@ const clients: Client[] = [
 
 export const mockApi = {
   // Get all clients
-  getClients: async (): Promise<Client[]> => {
+  getClients: async (): Promise<IClient[]> => {
     await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate API delay
     return [...clients]
   },
 
   // Create new client
-  createClient: async (clientData: Omit<Client, "_id" | "createdAt" | "updatedAt">): Promise<Client> => {
+  createClient: async (clientData: Omit<IClient, "_id" | "createdAt" | "updatedAt">): Promise<IClient> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
-    const newClient: Client = {
+    const newClient: IClient = {
       ...clientData,
       _id: Date.now().toString(),
       createdAt: new Date(),
@@ -88,7 +88,7 @@ export const mockApi = {
   },
 
   // Update client
-  updateClient: async (id: string, clientData: Partial<Client>): Promise<Client> => {
+  updateClient: async (id: string, clientData: Partial<IClient>): Promise<IClient> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
     const index = clients.findIndex((c) => c._id === id)
     if (index === -1) throw new Error("Client not found")
@@ -110,7 +110,7 @@ export const mockApi = {
   },
 
   // Get client by ID
-  getClient: async (id: string): Promise<Client | null> => {
+  getClient: async (id: string): Promise<IClient | null> => {
     await new Promise((resolve) => setTimeout(resolve, 500))
     return clients.find((c) => c._id === id) || null
   },
