@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Eye, Edit, Trash2, Search, ArrowUpDown, Filter } from "lucide-react"
-import type { Client } from "@/types/client"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
-import { ClientViewModal } from "./client-view-modal"
+import type { IClient } from "@/lib/types"
+import { ArrowUpDown, Edit, Eye, Filter, Search, Trash2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { ClientEditModal } from "./client-edit-modal"
+import { ClientViewModal } from "./client-view-modal"
 
 interface ClientsTableProps {
   refreshTrigger?: number
@@ -19,13 +19,13 @@ interface ClientsTableProps {
 
 export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
   const { toast } = useToast()
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<IClient[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [sortField, setSortField] = useState<keyof Client>("name")
+  const [sortField, setSortField] = useState<keyof IClient>("name")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [selectedClient, setSelectedClient] = useState<IClient | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
 
@@ -76,7 +76,7 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
     }
   }
 
-  const handleSort = (field: keyof Client) => {
+  const handleSort = (field: keyof IClient) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -87,9 +87,11 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
 
   const filteredAndSortedClients = useMemo(() => {
     const filtered = clients.filter((client) => {
+      if (!client) return false;
+
       const matchesSearch =
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.phone?.includes(searchTerm)
 

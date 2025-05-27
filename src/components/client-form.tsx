@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
-import type { Client } from "@/types/client"
+import type { IClient } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface ClientFormProps {
@@ -45,7 +45,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
 
     const formData = new FormData(e.currentTarget)
 
-    const clientData: Omit<Client, "_id" | "createdAt" | "updatedAt"> = {
+    const clientData: Omit<IClient, "_id" | "createdAt" | "updatedAt"> = {
       name: formData.get("name") as string,
       companyName: formData.get("companyName") as string,
       email: formData.get("email") as string,

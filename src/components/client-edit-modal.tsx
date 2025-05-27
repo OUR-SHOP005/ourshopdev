@@ -11,11 +11,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
-import type { Client } from "@/types/client"
+import type { IClient } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface ClientEditModalProps {
-  client: Client | null
+  client: IClient | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onClientUpdated: () => void
@@ -58,7 +58,7 @@ export function ClientEditModal({ client, open, onOpenChange, onClientUpdated }:
 
     const formData = new FormData(e.currentTarget)
 
-    const clientData: Partial<Client> = {
+    const clientData: Partial<IClient> = {
       name: formData.get("name") as string,
       companyName: formData.get("companyName") as string,
       email: formData.get("email") as string,

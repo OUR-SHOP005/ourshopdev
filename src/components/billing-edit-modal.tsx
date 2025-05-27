@@ -10,11 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
-import type { BillingRecord, ServiceBilled } from "@/types/billing"
+import type { IBillingRecord, IServiceBilled } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface BillingEditModalProps {
-  billingRecord: BillingRecord | null
+  billingRecord: IBillingRecord | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onBillingUpdated: () => void
@@ -23,8 +23,8 @@ interface BillingEditModalProps {
 export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingUpdated }: BillingEditModalProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [servicesBilled, setServicesBilled] = useState<ServiceBilled[]>([])
-  const [newService, setNewService] = useState<ServiceBilled>({
+  const [servicesBilled, setServicesBilled] = useState<IServiceBilled[]>([])
+  const [newService, setNewService] = useState<IServiceBilled>({
     service: "development",
     description: "",
     cost: 0,
@@ -83,7 +83,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
     const formData = new FormData(e.currentTarget)
     const totalAmount = calculateTotal()
 
-    const updatedData: Partial<BillingRecord> = {
+    const updatedData: Partial<IBillingRecord> = {
       amount: totalAmount,
       currency: (formData.get("currency") as string) || "INR",
       servicesBilled: servicesBilled,

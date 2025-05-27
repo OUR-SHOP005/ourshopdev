@@ -1,29 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import type { IBillingRecord, IClient } from "@/lib/types"
+import { AlertCircle, DollarSign, FileText, TrendingUp } from "lucide-react"
+import { useEffect, useState } from "react"
 import {
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Pie,
-  PieChart,
-  Cell,
   Bar,
   BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
 } from "recharts"
-import { TrendingUp, DollarSign, FileText, AlertCircle } from "lucide-react"
-import type { BillingRecord } from "@/types/billing"
-import type { Client } from "@/types/client"
 
 export function BillingAnalytics() {
-  const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [billingRecords, setBillingRecords] = useState<IBillingRecord[]>([])
+  const [clients, setClients] = useState<IClient[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -47,29 +46,29 @@ export function BillingAnalytics() {
   }
 
   // Calculate metrics
-  const totalRevenue = billingRecords.reduce((sum, record) => sum + record.amount, 0)
+  const totalRevenue = billingRecords.reduce((sum, record) => sum + (record?.amount || 0), 0)
   const paidAmount = billingRecords
-    .filter((record) => record.paymentStatus === "paid")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .filter((record) => record && record.paymentStatus === "paid")
+    .reduce((sum, record) => sum + (record?.amount || 0), 0)
   const unpaidAmount = billingRecords
-    .filter((record) => record.paymentStatus === "unpaid")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .filter((record) => record && record.paymentStatus === "unpaid")
+    .reduce((sum, record) => sum + (record?.amount || 0), 0)
   const overdueAmount = billingRecords
-    .filter((record) => record.paymentStatus === "overdue")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .filter((record) => record && record.paymentStatus === "overdue")
+    .reduce((sum, record) => sum + (record?.amount || 0), 0)
 
   const totalInvoices = billingRecords.length
-  const paidInvoices = billingRecords.filter((record) => record.paymentStatus === "paid").length
+  const paidInvoices = billingRecords.filter((record) => record && record.paymentStatus === "paid").length
   const collectionRate = totalInvoices > 0 ? (paidInvoices / totalInvoices) * 100 : 0
 
   // Payment status distribution
   const paymentStatusData = [
-    { name: "Paid", value: billingRecords.filter((r) => r.paymentStatus === "paid").length, color: "#10b981" },
-    { name: "Unpaid", value: billingRecords.filter((r) => r.paymentStatus === "unpaid").length, color: "#f59e0b" },
-    { name: "Overdue", value: billingRecords.filter((r) => r.paymentStatus === "overdue").length, color: "#ef4444" },
+    { name: "Paid", value: billingRecords.filter((r) => r && r.paymentStatus === "paid").length, color: "#10b981" },
+    { name: "Unpaid", value: billingRecords.filter((r) => r && r.paymentStatus === "unpaid").length, color: "#f59e0b" },
+    { name: "Overdue", value: billingRecords.filter((r) => r && r.paymentStatus === "overdue").length, color: "#ef4444" },
     {
       name: "Cancelled",
-      value: billingRecords.filter((r) => r.paymentStatus === "cancelled").length,
+      value: billingRecords.filter((r) => r && r.paymentStatus === "cancelled").length,
       color: "#6b7280",
     },
   ]
@@ -77,11 +76,12 @@ export function BillingAnalytics() {
   // Monthly revenue trend
   const monthlyRevenue = billingRecords.reduce(
     (acc, record) => {
+      if (!record) return acc;
       const month = new Date(record.billDate || record.createdAt || new Date()).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
       })
-      acc[month] = (acc[month] || 0) + record.amount
+      acc[month] = (acc[month] || 0) + (record.amount || 0)
       return acc
     },
     {} as Record<string, number>,
@@ -94,7 +94,9 @@ export function BillingAnalytics() {
   // Top services by revenue
   const serviceRevenue = billingRecords.reduce(
     (acc, record) => {
+      if (!record || !record.servicesBilled) return acc;
       record.servicesBilled?.forEach((service) => {
+        if (!service || !service.service) return;
         acc[service.service] = (acc[service.service] || 0) + (service.cost || 0)
       })
       return acc
@@ -290,7 +292,7 @@ export function BillingAnalytics() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Active Clients</span>
-              <Badge variant="secondary">{clients.filter((c) => c.status === "active").length}</Badge>
+              <Badge variant="secondary">{clients.filter((c) => c && c.status === "active").length}</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total Clients</span>

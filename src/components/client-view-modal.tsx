@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Copy, Phone, Mail, ExternalLink, Calendar, DollarSign } from "lucide-react"
-import type { Client } from "@/types/client"
+import type { IClient } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface ClientViewModalProps {
-  client: Client | null
+  client: IClient | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }

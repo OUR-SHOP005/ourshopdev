@@ -2,18 +2,17 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { X, Plus, FileText, Loader2 } from "lucide-react"
-import type { BillingRecord, ServiceBilled } from "@/types/billing"
-import type { Client } from "@/types/client"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import type { IBillingRecord, IClient, IServiceBilled } from "@/lib/types"
+import { FileText, Loader2, Plus, X } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface BillingFormProps {
   onBillingCreated?: () => void
@@ -23,10 +22,10 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [pdfGenerating, setPdfGenerating] = useState(false)
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [servicesBilled, setServicesBilled] = useState<ServiceBilled[]>([])
-  const [newService, setNewService] = useState<ServiceBilled>({
+  const [clients, setClients] = useState<IClient[]>([])
+  const [selectedClient, setSelectedClient] = useState<IClient | null>(null)
+  const [servicesBilled, setServicesBilled] = useState<IServiceBilled[]>([])
+  const [newService, setNewService] = useState<IServiceBilled>({
     service: "development",
     description: "",
     cost: 0,
@@ -125,8 +124,8 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
     const formData = new FormData(e.currentTarget)
     const totalAmount = calculateTotal()
 
-    const billingData: Omit<BillingRecord, "_id" | "billPdfUrl" | "createdAt" | "updatedAt"> = {
-      clientId: selectedClient._id!,
+    const billingData: Omit<IBillingRecord, "_id" | "billPdfUrl" | "createdAt" | "updatedAt"> = {
+      clientId: selectedClient?._id || "",
       invoiceNumber: formData.get("invoiceNumber") as string,
       amount: totalAmount,
       currency: (formData.get("currency") as string) || "INR",

@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Copy, Phone, Mail, DollarSign, FileText, Download } from "lucide-react"
-import type { BillingRecord } from "@/types/billing"
-import type { Client } from "@/types/client"
+import type { IBillingRecord, IClient } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 interface BillingViewModalProps {
-  billingRecord: BillingRecord | null
-  client: Client | null
+  billingRecord: IBillingRecord | null
+  client: IClient | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }

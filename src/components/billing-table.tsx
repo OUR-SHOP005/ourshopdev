@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Eye, Edit, Trash2, Search, ArrowUpDown, Filter, FileText, Download } from "lucide-react"
-import type { BillingRecord } from "@/types/billing"
-import type { Client } from "@/types/client"
+import type { IBillingRecord } from "@/lib/types"
+import type { IClient } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { BillingViewModal } from "./billing-view-modal"
 import { BillingEditModal } from "./billing-edit-modal"
@@ -20,16 +20,16 @@ interface BillingTableProps {
 
 export function BillingTable({ refreshTrigger }: BillingTableProps) {
   const { toast } = useToast()
-  const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [billingRecords, setBillingRecords] = useState<IBillingRecord[]>([])
+  const [clients, setClients] = useState<IClient[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [sortField, setSortField] = useState<keyof BillingRecord>("billDate")
+  const [sortField, setSortField] = useState<keyof IBillingRecord>("billDate")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
 
-  const [selectedBillingRecord, setSelectedBillingRecord] = useState<BillingRecord | null>(null)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [selectedBillingRecord, setSelectedBillingRecord] = useState<IBillingRecord | null>(null)
+  const [selectedClient, setSelectedClient] = useState<IClient | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
 
@@ -91,7 +91,7 @@ export function BillingTable({ refreshTrigger }: BillingTableProps) {
     }
   }
 
-  const handleSort = (field: keyof BillingRecord) => {
+  const handleSort = (field: keyof IBillingRecord) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
