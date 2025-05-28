@@ -205,6 +205,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
             title: "Success",
             description: "Billing record created and email sent successfully",
           })
+
         } else {
           toast({
             title: "Partial Success",

@@ -56,19 +56,18 @@ export async function POST(request: NextRequest) {
                 </tr>
               </thead>
               <tbody>
-                ${
-                  billingData.servicesBilled
-                    ?.map(
-                      (service: any) => `
+                ${billingData.servicesBilled
+        ?.map(
+          (service: any) => `
                   <tr>
                     <td>${service.service}</td>
                     <td>${service.description || ""}</td>
                     <td>${billingData.currency || "INR"} ${service.cost?.toLocaleString() || "0"}</td>
                   </tr>
                 `,
-                    )
-                    .join("") || ""
-                }
+        )
+        .join("") || ""
+      }
               </tbody>
             </table>
 
@@ -76,16 +75,15 @@ export async function POST(request: NextRequest) {
               <p>Total Amount: ${billingData.currency || "INR"} ${billingData.amount.toLocaleString()}</p>
             </div>
 
-            ${
-              billingData.notes
-                ? `
+            ${billingData.notes
+        ? `
               <div style="margin-top: 20px;">
                 <h4>Notes:</h4>
                 <p>${billingData.notes}</p>
               </div>
             `
-                : ""
-            }
+        : ""
+      }
 
             <div class="footer">
               <p>Thank you for your business!</p>
@@ -118,7 +116,13 @@ export async function POST(request: NextRequest) {
       throw new Error(error.message)
     }
 
-    return NextResponse.json({ success: true, emailId: data?.id })
+    return new NextResponse(pdfBuffer, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="bill.pdf"',
+      },
+    })
   } catch (error) {
     console.error("Email sending error:", error)
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 })

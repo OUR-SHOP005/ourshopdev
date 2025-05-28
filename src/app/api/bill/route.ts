@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       billingData.clientId,
       { $push: { billingHistory: savedBillingRecord._id } }
     )
-
     return NextResponse.json(savedBillingRecord, { status: 201 })
   } catch (error) {
     console.error("Billing save error:", error)
