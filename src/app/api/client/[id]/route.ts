@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updatedClient = await Client.findByIdAndUpdate(
       (await params).id,
       clientData,
-      { new: true, runValidators: true }
+      { new: true }
     )
 
     if (!updatedClient) {

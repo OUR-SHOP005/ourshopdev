@@ -37,15 +37,12 @@ export function BillingTable({ refreshTrigger }: BillingTableProps) {
     try {
       setLoading(true)
       const [billingResponse, clientsResponse] = await Promise.all([fetch("/api/bill"), fetch("/api/client")])
-
-      if (!billingResponse.ok || !clientsResponse.ok) {
-        throw new Error("Failed to fetch data")
+      
+      if (billingResponse.ok && clientsResponse.ok) {
+        const [billingData, clientsData] = await Promise.all([billingResponse.json(), clientsResponse.json()])
+        setBillingRecords(Array.isArray(billingData.data) ? billingData.data : [])
+        setClients(Array.isArray(clientsData.data) ? clientsData.data : [])
       }
-
-      const [billingData, clientsData] = await Promise.all([billingResponse.json(), clientsResponse.json()])
-
-      setBillingRecords(billingData.data)
-      setClients(clientsData.data)
     } catch (error) {
       toast({
         title: "Error",
