@@ -1,65 +1,74 @@
 "use server"
 
-import { sendBulkInvoiceReminders } from "./email-actions"
+import { IBillingRecord, IClient } from "@/lib/types";
+import { generateEmailContent } from "../ai-email-generator";
 
+/**
+ * Send reminder emails in bulk to clients with overdue invoices
+ */
 export async function sendBulkReminders(
-  overdueInvoices: Array<{
-    _id?: string
-    clientId: string
-    invoiceNumber: string
-    amount: number
-    currency?: string
-    dueDate?: Date
-  }>,
-  clients: Array<{
-    _id?: string
-    name: string
-    email: string
-  }>,
+  selectedRecords: IBillingRecord[],
+  clients: IClient[]
 ) {
-  try {
-    const emailData = overdueInvoices.map((invoice) => {
-      const client = clients.find((c) => c._id === invoice.clientId)
+  const results = {
+    successful: 0,
+    failed: 0,
+    errors: [] as string[],
+  };
+
+  for (const record of selectedRecords) {
+    try {
+      // Find the client
+      const client = clients.find((c) => c._id === record.clientId);
 
       if (!client) {
-        throw new Error(`Client not found for invoice ${invoice.invoiceNumber}`)
+        results.failed++;
+        results.errors.push(`Client not found for invoice ${record.invoiceNumber}`);
+        continue;
       }
 
-      return {
-        clientId: invoice.clientId,
-        invoiceId: invoice._id || "",
-        clientEmail: client.email,
+      // Generate personalized email content with AI
+      const emailContent = await generateEmailContent("PAYMENT_REMINDER", {
         clientName: client.name,
-        invoiceNumber: invoice.invoiceNumber,
-        amount: invoice.amount,
-        currency: invoice.currency || "USD",
-        dueDate: invoice.dueDate || new Date(),
+        companyName: client.companyName,
+        invoiceNumber: record.invoiceNumber,
+        amount: record.amount,
+        currency: record.currency || "USD",
+        dueDate: record.dueDate ? new Date(record.dueDate).toLocaleDateString() : "ASAP",
+      });
+
+      // Send the email using our email API
+      const response = await fetch("/api/(helper)/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.API_KEY || "",
+        },
+        body: JSON.stringify({
+          to: client.email,
+          subject: emailContent.subject,
+          html: emailContent.body.replace(/\n/g, "<br>"),
+          clientId: client._id,
+          reminderType: "INVOICE_REMINDER",
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send reminder");
       }
-    })
 
-    const results = await sendBulkInvoiceReminders(emailData)
-
-    const successCount = results.filter((r) => r.success).length
-    const failureCount = results.filter((r) => !r.success).length
-
-    return {
-      success: true,
-      results,
-      summary: {
-        total: results.length,
-        successful: successCount,
-        failed: failureCount,
-      },
-    }
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || "Failed to send bulk reminders",
-      summary: {
-        total: 0,
-        successful: 0,
-        failed: 0,
-      },
+      results.successful++;
+    } catch (error: any) {
+      console.error(`Failed to send reminder for invoice ${record.invoiceNumber}:`, error);
+      results.failed++;
+      results.errors.push(`${record.invoiceNumber}: ${error.message}`);
     }
   }
+
+  return {
+    success: results.successful > 0,
+    summary: results,
+    error: results.errors.length > 0 ? results.errors.join("; ") : undefined,
+  };
 }
