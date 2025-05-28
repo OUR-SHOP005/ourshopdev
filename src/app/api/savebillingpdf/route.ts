@@ -34,23 +34,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to generate PDF: " + (error as Error).message }, { status: 500 })
     }
 
-    // Upload to Cloudinary
+
     try {
       const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              resource_type: "raw",
-              folder: "invoices",
-              public_id: `invoice-${billingData.invoiceNumber}-${Date.now()}`,
-              format: "pdf",
-            },
-            (error, result) => {
-              if (error) reject(error)
-              else resolve(result)
-            },
-          )
-          .end(pdfBuffer)
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: "raw",              // Raw for PDFs, ZIPs, etc.
+            folder: "invoices",                // Folder in Cloudinary
+            public_id: `invoice-${billingData.invoiceNumber}-${Date.now()}`,
+            format: "pdf",                     // Optional, format can be inferred
+            access_mode: "public",             // ✅ Ensure it's publicly accessible
+            type: "upload",                    // ✅ Upload type (not 'private')
+            use_filename: true,                // Optional: retain original filename
+            unique_filename: false             // Optional: allow fixed names
+          },
+          (error, result) => {
+            if (error) reject(error)
+            else resolve(result)
+          }
+        ).end(pdfBuffer)
       })
 
       const pdfUrl = (uploadResult as any).secure_url
@@ -63,6 +65,7 @@ export async function POST(request: NextRequest) {
       console.error("PDF upload error:", error)
       return NextResponse.json({ error: "Failed to upload PDF: " + (error as Error).message }, { status: 500 })
     }
+
   } catch (error) {
     console.error("PDF generation error:", error)
     return NextResponse.json({ error: "Failed to generate PDF: " + (error as Error).message }, { status: 500 })

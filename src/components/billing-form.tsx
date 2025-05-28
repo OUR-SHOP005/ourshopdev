@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import type { IBillingRecord, IClient, IServiceBilled } from "@/lib/types"
+import { BillingRecordSchema } from "@/lib/types"
 import { FileText, Loader2, Plus, X } from "lucide-react"
 import { useEffect, useState } from "react"
+import { ZodError } from "zod"
 
 interface BillingFormProps {
   onBillingCreated?: () => void
@@ -30,6 +32,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
     description: "",
     cost: 0,
   })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const serviceOptions = [
     "design",
@@ -87,6 +90,17 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
         description: "",
         cost: 0,
       })
+    } else {
+      // Show validation error for service fields
+      let errorMsg = "";
+      if (!newService.description) errorMsg = "Service description is required";
+      else if (!newService.cost || newService.cost <= 0) errorMsg = "Service cost must be greater than 0";
+
+      toast({
+        title: "Validation Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     }
   }
 
@@ -98,14 +112,24 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
     return servicesBilled.reduce((total, service) => total + (service.cost || 0), 0)
   }
 
+  // Helper function to show field error message
+  const getFieldError = (field: string) => {
+    return formErrors[field] ? (
+      <p className="text-sm text-destructive mt-1">{formErrors[field]}</p>
+    ) : null;
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setFormErrors({});
+
     if (!selectedClient) {
       toast({
         title: "Error",
         description: "Please select a client",
         variant: "destructive",
       })
+      setFormErrors({ clientId: "Please select a client" });
       return
     }
 
@@ -115,6 +139,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
         description: "Please add at least one service",
         variant: "destructive",
       })
+      setFormErrors({ servicesBilled: "Please add at least one service" });
       return
     }
 
@@ -131,7 +156,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
       currency: (formData.get("currency") as string) || "INR",
       servicesBilled: servicesBilled,
       billDate: new Date(formData.get("billDate") as string),
-      dueDate: new Date(formData.get("dueDate") as string),
+      dueDate: formData.get("dueDate") as string ? new Date(formData.get("dueDate") as string) : undefined,
       paymentStatus: formData.get("paymentStatus") as any,
       paymentMethod: formData.get("paymentMethod") as string,
       transactionId: formData.get("transactionId") as string,
@@ -139,6 +164,33 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
     }
 
     try {
+      // Validate with Zod before proceeding
+      try {
+        BillingRecordSchema.parse({
+          ...billingData,
+          billPdfUrl: "placeholder", // Temporary placeholder for validation
+        });
+      } catch (validationError) {
+        if (validationError instanceof ZodError) {
+          const errors: Record<string, string> = {};
+          validationError.errors.forEach((err) => {
+            const fieldPath = err.path.join('.');
+            errors[fieldPath] = err.message;
+          });
+          setFormErrors(errors);
+
+          setPdfGenerating(false);
+          setLoading(false);
+
+          toast({
+            title: "Validation Error",
+            description: "Please check the form for errors",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       // Step 1: Generate PDF
       toast({
         title: "Generating PDF",
@@ -264,7 +316,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                 setSelectedClient(client || null)
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className={formErrors["clientId"] ? "border-destructive" : ""}>
                 <SelectValue placeholder="Choose a client" />
               </SelectTrigger>
               <SelectContent>
@@ -275,6 +327,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                 ))}
               </SelectContent>
             </Select>
+            {getFieldError("clientId")}
           </div>
 
           {selectedClient && (
@@ -302,11 +355,24 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="invoiceNumber">Invoice Number *</Label>
-              <Input id="invoiceNumber" name="invoiceNumber" defaultValue={generateInvoiceNumber()} required />
+              <Input
+                id="invoiceNumber"
+                name="invoiceNumber"
+                defaultValue={generateInvoiceNumber()}
+                required
+                className={formErrors["invoiceNumber"] ? "border-destructive" : ""}
+              />
+              {getFieldError("invoiceNumber")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Input id="currency" name="currency" defaultValue="INR" />
+              <Input
+                id="currency"
+                name="currency"
+                defaultValue="INR"
+                className={formErrors["currency"] ? "border-destructive" : ""}
+              />
+              {getFieldError("currency")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="billDate">Bill Date *</Label>
@@ -316,7 +382,9 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                 type="date"
                 defaultValue={new Date().toISOString().split("T")[0]}
                 required
+                className={formErrors["billDate"] ? "border-destructive" : ""}
               />
+              {getFieldError("billDate")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="dueDate">Due Date</Label>
@@ -325,7 +393,9 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                 name="dueDate"
                 type="date"
                 defaultValue={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+                className={formErrors["dueDate"] ? "border-destructive" : ""}
               />
+              {getFieldError("dueDate")}
             </div>
           </div>
 
@@ -346,6 +416,9 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                 </div>
               ))}
             </div>
+            {formErrors["servicesBilled"] && (
+              <p className="text-sm text-destructive">{formErrors["servicesBilled"]}</p>
+            )}
 
             {/* Add New Service */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border rounded-lg bg-muted/50">
@@ -393,7 +466,7 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
             <div className="space-y-2">
               <Label htmlFor="paymentStatus">Payment Status</Label>
               <Select name="paymentStatus" defaultValue="unpaid">
-                <SelectTrigger>
+                <SelectTrigger className={formErrors["paymentStatus"] ? "border-destructive" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -404,21 +477,41 @@ export function BillingForm({ onBillingCreated }: BillingFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {getFieldError("paymentStatus")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="paymentMethod">Payment Method</Label>
-              <Input id="paymentMethod" name="paymentMethod" placeholder="e.g., Bank Transfer, UPI" />
+              <Input
+                id="paymentMethod"
+                name="paymentMethod"
+                placeholder="e.g., Bank Transfer, UPI"
+                className={formErrors["paymentMethod"] ? "border-destructive" : ""}
+              />
+              {getFieldError("paymentMethod")}
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="transactionId">Transaction ID</Label>
-              <Input id="transactionId" name="transactionId" placeholder="Transaction reference number" />
+              <Input
+                id="transactionId"
+                name="transactionId"
+                placeholder="Transaction reference number"
+                className={formErrors["transactionId"] ? "border-destructive" : ""}
+              />
+              {getFieldError("transactionId")}
             </div>
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" name="notes" rows={3} placeholder="Additional notes or terms..." />
+            <Textarea
+              id="notes"
+              name="notes"
+              rows={3}
+              placeholder="Additional notes or terms..."
+              className={formErrors["notes"] ? "border-destructive" : ""}
+            />
+            {getFieldError("notes")}
           </div>
 
           <Button type="submit" disabled={loading || !selectedClient} className="w-full">

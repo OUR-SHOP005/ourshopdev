@@ -2,17 +2,19 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { X, Plus } from "lucide-react"
-import type { IClient } from "@/lib/types"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import type { IClient } from "@/lib/types"
+import { ClientSchema } from "@/lib/types"
+import { Plus, X } from "lucide-react"
+import { useState } from "react"
+import { ZodError } from "zod"
 
 interface ClientFormProps {
   onClientAdded?: () => void
@@ -26,6 +28,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
   const [socialProfiles, setSocialProfiles] = useState<{ platform: string; url: string }[]>([])
   const [newTag, setNewTag] = useState("")
   const [newSocial, setNewSocial] = useState({ platform: "", url: "" })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
   const serviceOptions = [
     "design",
@@ -42,6 +45,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
+    setFormErrors({})
 
     const formData = new FormData(e.currentTarget)
 
@@ -88,6 +92,9 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
     }
 
     try {
+      // Validate form data with Zod
+      ClientSchema.parse(clientData);
+
       const response = await fetch("/api/client", {
         method: "POST",
         headers: {
@@ -97,7 +104,8 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create client")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to create client")
       }
 
       toast({
@@ -113,11 +121,27 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
 
       onClientAdded?.()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create client",
-        variant: "destructive",
-      })
+      if (error instanceof ZodError) {
+        // Handle Zod validation errors
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const fieldPath = err.path.join('.');
+          errors[fieldPath] = err.message;
+        });
+        setFormErrors(errors);
+
+        toast({
+          title: "Validation Error",
+          description: "Please check the form for errors",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: (error as Error).message || "Failed to create client",
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -155,6 +179,13 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
     setSocialProfiles(socialProfiles.filter((_, i) => i !== index))
   }
 
+  // Helper function to show field error message
+  const getFieldError = (field: string) => {
+    return formErrors[field] ? (
+      <p className="text-sm text-destructive mt-1">{formErrors[field]}</p>
+    ) : null;
+  }
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -167,19 +198,23 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
-              <Input id="name" name="name" required />
+              <Input id="name" name="name" required className={formErrors["name"] ? "border-destructive" : ""} />
+              {getFieldError("name")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" name="companyName" />
+              <Input id="companyName" name="companyName" className={formErrors["companyName"] ? "border-destructive" : ""} />
+              {getFieldError("companyName")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email *</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input id="email" name="email" type="email" required className={formErrors["email"] ? "border-destructive" : ""} />
+              {getFieldError("email")}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" type="tel" />
+              <Input id="phone" name="phone" type="tel" className={formErrors["phone"] ? "border-destructive" : ""} />
+              {getFieldError("phone")}
             </div>
           </div>
 
@@ -189,23 +224,28 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="street">Street</Label>
-                <Input id="street" name="street" />
+                <Input id="street" name="street" className={formErrors["address.street"] ? "border-destructive" : ""} />
+                {getFieldError("address.street")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" name="city" />
+                <Input id="city" name="city" className={formErrors["address.city"] ? "border-destructive" : ""} />
+                {getFieldError("address.city")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="state">State</Label>
-                <Input id="state" name="state" />
+                <Input id="state" name="state" className={formErrors["address.state"] ? "border-destructive" : ""} />
+                {getFieldError("address.state")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
-                <Input id="country" name="country" />
+                <Input id="country" name="country" className={formErrors["address.country"] ? "border-destructive" : ""} />
+                {getFieldError("address.country")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="postalCode">Postal Code</Label>
-                <Input id="postalCode" name="postalCode" />
+                <Input id="postalCode" name="postalCode" className={formErrors["address.postalCode"] ? "border-destructive" : ""} />
+                {getFieldError("address.postalCode")}
               </div>
             </div>
           </div>
@@ -216,19 +256,23 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="pocName">Name</Label>
-                <Input id="pocName" name="pocName" />
+                <Input id="pocName" name="pocName" className={formErrors["pointOfContact.name"] ? "border-destructive" : ""} />
+                {getFieldError("pointOfContact.name")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pocRole">Role</Label>
-                <Input id="pocRole" name="pocRole" />
+                <Input id="pocRole" name="pocRole" className={formErrors["pointOfContact.role"] ? "border-destructive" : ""} />
+                {getFieldError("pointOfContact.role")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pocPhone">Phone</Label>
-                <Input id="pocPhone" name="pocPhone" type="tel" />
+                <Input id="pocPhone" name="pocPhone" type="tel" className={formErrors["pointOfContact.phone"] ? "border-destructive" : ""} />
+                {getFieldError("pointOfContact.phone")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pocEmail">Email</Label>
-                <Input id="pocEmail" name="pocEmail" type="email" />
+                <Input id="pocEmail" name="pocEmail" type="email" className={formErrors["pointOfContact.email"] ? "border-destructive" : ""} />
+                {getFieldError("pointOfContact.email")}
               </div>
             </div>
           </div>
@@ -239,24 +283,28 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="websiteUrl">URL</Label>
-                <Input id="websiteUrl" name="websiteUrl" type="url" />
+                <Input id="websiteUrl" name="websiteUrl" type="url" className={formErrors["website.url"] ? "border-destructive" : ""} />
+                {getFieldError("website.url")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stack">Tech Stack (comma separated)</Label>
-                <Input id="stack" name="stack" placeholder="React, Node.js, MongoDB" />
+                <Input id="stack" name="stack" placeholder="React, Node.js, MongoDB" className={formErrors["website.stack"] ? "border-destructive" : ""} />
+                {getFieldError("website.stack")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="domainProvider">Domain Provider</Label>
-                <Input id="domainProvider" name="domainProvider" />
+                <Input id="domainProvider" name="domainProvider" className={formErrors["website.domainProvider"] ? "border-destructive" : ""} />
+                {getFieldError("website.domainProvider")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hostingProvider">Hosting Provider</Label>
-                <Input id="hostingProvider" name="hostingProvider" />
+                <Input id="hostingProvider" name="hostingProvider" className={formErrors["website.hostingProvider"] ? "border-destructive" : ""} />
+                {getFieldError("website.hostingProvider")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="websiteStatus">Website Status</Label>
                 <Select name="websiteStatus">
-                  <SelectTrigger>
+                  <SelectTrigger className={formErrors["website.status"] ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -266,10 +314,12 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                     <SelectItem value="offline">Offline</SelectItem>
                   </SelectContent>
                 </Select>
+                {getFieldError("website.status")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mailAddress">Mail Address</Label>
-                <Input id="mailAddress" name="mailAddress" type="email" />
+                <Input id="mailAddress" name="mailAddress" type="email" className={formErrors["website.mailAddress"] ? "border-destructive" : ""} />
+                {getFieldError("website.mailAddress")}
               </div>
             </div>
           </div>
@@ -285,8 +335,9 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                 </Badge>
               ))}
             </div>
+            {formErrors["services"] && <p className="text-sm text-destructive">{formErrors["services"]}</p>}
             <Select onValueChange={addService}>
-              <SelectTrigger>
+              <SelectTrigger className={formErrors["services"] ? "border-destructive" : ""}>
                 <SelectValue placeholder="Add service" />
               </SelectTrigger>
               <SelectContent>
@@ -313,6 +364,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                 </div>
               ))}
             </div>
+            {formErrors["social"] && <p className="text-sm text-destructive">{formErrors["social"]}</p>}
             <div className="flex gap-2">
               <Input
                 placeholder="Platform"
@@ -337,7 +389,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
               <div className="space-y-2">
                 <Label htmlFor="billingModel">Billing Model</Label>
                 <Select name="billingModel">
-                  <SelectTrigger>
+                  <SelectTrigger className={formErrors["billingPlan.model"] ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent>
@@ -346,14 +398,17 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                     <SelectItem value="retainer">Retainer</SelectItem>
                   </SelectContent>
                 </Select>
+                {getFieldError("billingPlan.model")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" name="amount" type="number" />
+                <Input id="amount" name="amount" type="number" className={formErrors["billingPlan.amount"] ? "border-destructive" : ""} />
+                {getFieldError("billingPlan.amount")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" name="currency" defaultValue="INR" />
+                <Input id="currency" name="currency" defaultValue="INR" className={formErrors["billingPlan.currency"] ? "border-destructive" : ""} />
+                {getFieldError("billingPlan.currency")}
               </div>
             </div>
           </div>
@@ -363,7 +418,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select name="status">
-                <SelectTrigger>
+                <SelectTrigger className={formErrors["status"] ? "border-destructive" : ""}>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -374,6 +429,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
+              {getFieldError("status")}
             </div>
             <div className="space-y-2">
               <Label>Tags</Label>
@@ -385,6 +441,7 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                   </Badge>
                 ))}
               </div>
+              {formErrors["tags"] && <p className="text-sm text-destructive">{formErrors["tags"]}</p>}
               <div className="flex gap-2">
                 <Input
                   placeholder="Add tag"
@@ -402,7 +459,8 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" name="notes" rows={4} />
+            <Textarea id="notes" name="notes" rows={4} className={formErrors["notes"] ? "border-destructive" : ""} />
+            {getFieldError("notes")}
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">

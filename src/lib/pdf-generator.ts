@@ -1,13 +1,5 @@
 import type { IBillingRecord, IClient } from "@/lib/types"
-import { v2 as cloudinary } from "cloudinary"
 import jsPDF from "jspdf"
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
 
 export function generateInvoicePDF(billingData: IBillingRecord, clientData: IClient): jsPDF {
   const doc = new jsPDF()

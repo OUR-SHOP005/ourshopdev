@@ -55,6 +55,11 @@ export async function POST(request: NextRequest) {
     await connectDB()
     const clientData = await request.json()
 
+    const checkClient = await Client.findById(clientData._id)
+
+    if (checkClient) {
+      return NextResponse.json({ error: "Client already exists" }, { status: 400 })
+    }
     // Add default values
     if (!clientData.createdAt) clientData.createdAt = new Date()
     if (!clientData.updatedAt) clientData.updatedAt = new Date()
@@ -63,6 +68,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newClient, { status: 201 })
   } catch (error) {
     console.error("Failed to create client:", error)
-    return NextResponse.json({ error: "Failed to create client" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to create client: " + (error as Error).message }, { status: 500 })
   }
 }
