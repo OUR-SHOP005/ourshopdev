@@ -64,6 +64,8 @@ export function BillingAnalytics() {
   const [exportLoading, setExportLoading] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
+  const [exportType, setExportType] = useState("invoices")
+  const [exportFormat, setExportFormat] = useState("pdf")
   const { toast } = useToast()
 
   const fetchData = async () => {
@@ -200,27 +202,27 @@ export function BillingAnalytics() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ data, type, fields }),
+        body: JSON.stringify({ data, type, fields, format: exportFormat }),
       })
 
       if (!response.ok) {
         throw new Error("Export failed")
       }
 
-      // Create a download link for the CSV
+      // Create a download link for the file
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.style.display = "none"
       a.href = url
-      a.download = `${type}-export-${new Date().toISOString().split("T")[0]}.csv`
+      a.download = `${type}-export-${new Date().toISOString().split("T")[0]}.${exportFormat}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
 
       toast({
         title: "Export successful",
-        description: `${type} data has been exported to CSV`,
+        description: `${type} data has been exported to ${exportFormat.toUpperCase()}`,
       })
     } catch (error) {
       console.error("Export error:", error)
@@ -415,7 +417,7 @@ export function BillingAnalytics() {
           <p className="text-muted-foreground">Revenue insights and client analytics</p>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="invoices" onValueChange={(value) => exportData(value)} disabled={exportLoading}>
+          <Select defaultValue="invoices" onValueChange={(value) => setExportType(value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Export Data" />
             </SelectTrigger>
@@ -425,7 +427,16 @@ export function BillingAnalytics() {
               <SelectItem value="revenue">Export Revenue</SelectItem>
             </SelectContent>
           </Select>
-          <Button disabled={exportLoading}>
+          <Select defaultValue="csv" onValueChange={(value) => setExportFormat(value)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Format" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="pdf">PDF</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => exportData(exportType)} disabled={exportLoading}>
             {exportLoading ? (
               "Exporting..."
             ) : (

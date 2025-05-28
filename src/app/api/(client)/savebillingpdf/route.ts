@@ -1,6 +1,6 @@
 import { connectDB } from "@/lib/db"
 import { Client } from "@/lib/models"
-import { generateInvoicePDF } from "@/lib/pdf-generator"
+import { generateInvoicePDF } from "@/utils/pdf-generator"
 import { v2 as cloudinary } from "cloudinary"
 import { type NextRequest, NextResponse } from "next/server"
 
