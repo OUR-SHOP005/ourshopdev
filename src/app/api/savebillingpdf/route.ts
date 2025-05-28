@@ -1,3 +1,5 @@
+import { connectDB } from "@/lib/db"
+import { Client } from "@/lib/models"
 import { generateInvoicePDF } from "@/lib/pdf-generator"
 import { v2 as cloudinary } from "cloudinary"
 import { type NextRequest, NextResponse } from "next/server"
@@ -14,13 +16,12 @@ export async function POST(request: NextRequest) {
     const billingData = await request.json()
 
     // Get client data
-    const clientResponse = await fetch(
-      `/api/client/${billingData.clientId}`,
-    )
-    if (!clientResponse.ok) {
-      throw new Error("Failed to fetch client data")
+    await connectDB()
+    const clientData = await Client.findById(billingData.clientId)
+
+    if (!clientData) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }
-    const clientData = await clientResponse.json()
 
     // Generate PDF
     let pdfBuffer: Buffer
