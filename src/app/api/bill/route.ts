@@ -1,6 +1,5 @@
 import { connectDB } from "@/lib/db"
 import { BillingRecord, Client } from "@/lib/models"
-import { generateBillingPdf } from "@/lib/pdf-generator"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -10,7 +9,17 @@ export async function POST(request: NextRequest) {
 
     // Generate PDF if not provided
     if (!billingData.billPdfUrl) {
-      billingData.billPdfUrl = await generateBillingPdf(billingData)
+      const pdfResponse = await fetch("/api/savebillingpdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(billingData),
+      })
+      if (!pdfResponse.ok) {
+        throw new Error("Failed to generate PDF")
+      }
+      billingData.billPdfUrl = (await pdfResponse.json()).pdfUrl
     }
 
     // Save billing record
