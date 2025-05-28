@@ -1,59 +1,50 @@
 "use server"
 
 import { Resend } from "resend"
-import { generateEmailContent } from '../ai-email-generator'
 
 // Initialize Resend with API key from environment variable
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-/**
- * Send an invoice reminder email to a client
- */
 export async function sendInvoiceReminder(
   clientId: string,
   invoiceId: string,
-  email: string,
+  clientEmail: string,
   clientName: string,
   invoiceNumber: string,
   amount: number,
   currency: string,
-  dueDate: Date
+  dueDate: Date,
 ) {
   try {
-    // Generate personalized email content with AI
-    const emailContent = await generateEmailContent('PAYMENT_REMINDER', {
-      clientName,
-      invoiceNumber,
-      amount,
-      currency,
-      dueDate: new Date(dueDate).toLocaleDateString(),
+    const formattedDueDate = new Date(dueDate).toLocaleDateString()
+    const formattedAmount = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency || "USD",
+    }).format(amount)
+
+    const { data, error } = await resend.emails.send({
+      from: "Invoice Reminder <onboarding@resend.dev>",
+      to: clientEmail,
+      subject: `Invoice Reminder: ${invoiceNumber}`,
+      html: `
+        <div>
+          <h1>Invoice Payment Reminder</h1>
+          <p>Dear ${clientName},</p>
+          <p>This is a friendly reminder that invoice ${invoiceNumber} for ${formattedAmount} is due on ${formattedDueDate}.</p>
+          <p>Please make your payment at your earliest convenience.</p>
+          <p>Thank you for your business!</p>
+          <p>Best regards,<br/>Your Company</p>
+        </div>
+      `,
     })
 
-    // Send the email using our email API
-    const response = await fetch('/api/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.API_KEY || '',
-      },
-      body: JSON.stringify({
-        to: email,
-        subject: emailContent.subject,
-        html: emailContent.body.replace(/\n/g, '<br>'),
-        clientId,
-        reminderType: 'INVOICE_REMINDER',
-      }),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to send reminder')
+    if (error) {
+      return { success: false, error: error.message }
     }
 
-    return { success: true }
+    return { success: true, messageId: data?.id }
   } catch (error: any) {
-    console.error('Invoice reminder error:', error)
-    return { success: false, error: error.message || 'Failed to send reminder' }
+    return { success: false, error: error.message || "Failed to send email" }
   }
 }
 
