@@ -1,17 +1,17 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { X, Plus } from "lucide-react"
-import type { IBillingRecord, IServiceBilled } from "@/lib/types"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import type { IBillingRecord, IServiceBilled } from "@/lib/types"
+import { Plus, X } from "lucide-react"
+import type React from "react"
+import { useEffect, useState } from "react"
 
 interface BillingEditModalProps {
   billingRecord: IBillingRecord | null
@@ -151,7 +151,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
                     ? new Date(billingRecord.billDate).toISOString().split("T")[0]
                     : new Date().toISOString().split("T")[0]
                 }
-                required
+                readOnly
               />
             </div>
             <div className="space-y-2">
@@ -165,6 +165,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
                     ? new Date(billingRecord.dueDate).toISOString().split("T")[0]
                     : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
                 }
+                readOnly
               />
             </div>
           </div>
@@ -192,6 +193,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
               <Select
                 value={newService.service}
                 onValueChange={(value) => setNewService({ ...newService, service: value as any })}
+                disabled
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -252,6 +254,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
                 name="paymentMethod"
                 placeholder="e.g., Bank Transfer, UPI"
                 defaultValue={billingRecord.paymentMethod || ""}
+                readOnly
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -261,6 +264,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
                 name="transactionId"
                 placeholder="Transaction reference number"
                 defaultValue={billingRecord.transactionId || ""}
+                readOnly
               />
             </div>
           </div>
@@ -274,6 +278,7 @@ export function BillingEditModal({ billingRecord, open, onOpenChange, onBillingU
               rows={3}
               placeholder="Additional notes or terms..."
               defaultValue={billingRecord.notes || ""}
+              readOnly
             />
           </div>
 

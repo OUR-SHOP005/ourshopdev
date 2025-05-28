@@ -34,26 +34,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to generate PDF: " + (error as Error).message }, { status: 500 })
     }
 
+    console.log("PDF Buffer Length:", pdfBuffer.length)
 
     try {
       const uploadResult = await new Promise((resolve, reject) => {
         cloudinary.uploader.upload_stream(
           {
-            resource_type: "raw",              // Raw for PDFs, ZIPs, etc.
-            folder: "invoices",                // Folder in Cloudinary
+            resource_type: "raw",
+            folder: "invoices",
             public_id: `invoice-${billingData.invoiceNumber}-${Date.now()}`,
-            format: "pdf",                     // Optional, format can be inferred
-            access_mode: "public",             // ✅ Ensure it's publicly accessible
-            type: "upload",                    // ✅ Upload type (not 'private')
-            use_filename: true,                // Optional: retain original filename
-            unique_filename: false             // Optional: allow fixed names
+            format: "pdf",
+            type: "upload",          // Must be "upload"
+            access_mode: "public",   // Must be public for accessibility
+            use_filename: true,
+            unique_filename: false,
+            overwrite: true,         // Ensures updates overwrite instead of failing silently
           },
+
           (error, result) => {
             if (error) reject(error)
             else resolve(result)
           }
         ).end(pdfBuffer)
       })
+      console.log("Upload result:", uploadResult)
 
       const pdfUrl = (uploadResult as any).secure_url
 

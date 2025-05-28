@@ -1,9 +1,43 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  LabelList,
+} from "recharts"
+import {
+  DollarSign,
+  Users,
+  FileText,
+  AlertTriangle,
+  Download,
+  Search,
+  Mail,
+  TrendingUp,
+  Calendar,
+  CreditCard,
+} from "lucide-react"
+import { sendInvoiceReminder } from "@/lib/actions/email-actions"
+import type { IBillingRecord, IClient } from "@/lib/types"
+import { toast } from "@/components/use-toast"
 import {
   Dialog,
   DialogContent,
@@ -13,43 +47,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/components/use-toast"
-import { sendBulkReminders } from "@/lib/actions/bulk-email-actions"
-import { sendInvoiceReminder } from "@/lib/actions/email-actions"
-import type { IBillingRecord, IClient } from "@/lib/types"
-import {
-  AlertTriangle,
-  Calendar,
-  CreditCard,
-  DollarSign,
-  Download,
-  FileText,
-  Mail,
-  Search,
-  TrendingUp,
-  Users,
-} from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts"
 import { ClientEngagementHeatmap } from "./client-engagement-heatmap"
 import { PaymentForecasting } from "./payment-forecasting"
+import { sendBulkReminders } from "@/lib/actions/bulk-email-actions"
 
 export default function AnalyticsDashboard() {
   const [billingRecords, setBillingRecords] = useState<IBillingRecord[]>([])
@@ -317,7 +317,7 @@ export default function AnalyticsDashboard() {
       const totalBilled = clientBillings.reduce((sum, record) => sum + record.amount, 0)
       const clientAge = clients.find((c) => c._id === clientId)?.createdAt
         ? (new Date().getTime() - new Date(clients.find((c) => c._id === clientId)?.createdAt || 0).getTime()) /
-        (1000 * 60 * 60 * 24 * 30)
+          (1000 * 60 * 60 * 24 * 30)
         : 1
 
       // Monthly LTV = Total billed / months as client
@@ -339,9 +339,9 @@ export default function AnalyticsDashboard() {
       const isPaused = client.status === "paused" ? 20 : 0
       const recentActivity = client.updatedAt
         ? Math.min(
-          100,
-          ((new Date().getTime() - new Date(client.updatedAt).getTime()) / (1000 * 60 * 60 * 24 * 30)) * 10,
-        )
+            100,
+            ((new Date().getTime() - new Date(client.updatedAt).getTime()) / (1000 * 60 * 60 * 24 * 30)) * 10,
+          )
         : 0
 
       // Calculate risk score (0-100)

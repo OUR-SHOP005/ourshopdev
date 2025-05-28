@@ -40,7 +40,7 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to fetch clients",
+        description: error instanceof Error ? error.message : "Failed to fetch clients",
         variant: "destructive",
       })
       setClients([])
@@ -72,7 +72,7 @@ export function ClientsTable({ refreshTrigger }: ClientsTableProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete client",
+        description: error instanceof Error ? error.message : "Failed to delete client",
         variant: "destructive",
       })
     }

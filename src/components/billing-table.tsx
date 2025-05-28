@@ -46,7 +46,7 @@ export function BillingTable({ refreshTrigger }: BillingTableProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to fetch billing records",
+        description: error instanceof Error ? error.message : "Failed to fetch billing records",
         variant: "destructive",
       })
     } finally {
@@ -82,7 +82,7 @@ export function BillingTable({ refreshTrigger }: BillingTableProps) {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete billing record",
+        description: error instanceof Error ? error.message : "Failed to delete billing record",
         variant: "destructive",
       })
     }
