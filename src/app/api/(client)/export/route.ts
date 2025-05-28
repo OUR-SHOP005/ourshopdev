@@ -45,7 +45,7 @@ function convertToPDF(data: any[], fields: string[], type: string) {
     return fields.map(field => {
       const value = field.split(".").reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : ""), item)
       if (value instanceof Date) {
-        return value.toLocaleDateString()
+        return value.toLocaleDateString().split("T")[0]
       } else if (typeof value === "object" && value !== null) {
         return JSON.stringify(value)
       }

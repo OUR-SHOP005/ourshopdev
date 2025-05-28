@@ -28,6 +28,7 @@ import {
   DollarSign,
   Download,
   FileText,
+  IndianRupee,
   Mail,
   Search,
   TrendingUp,
@@ -66,11 +67,79 @@ export function BillingAnalytics() {
   const [bulkEmailLoading, setBulkEmailLoading] = useState(false)
   const [exportType, setExportType] = useState("invoices")
   const [exportFormat, setExportFormat] = useState("pdf")
+  const [appCurrency, setAppCurrency] = useState<"USD" | "INR">("USD")
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ INR: 75 }) // Default rates
+  const [isLoadingRate, setIsLoadingRate] = useState(false)
   const { toast } = useToast()
+
+  // Fetch exchange rates for multiple currencies
+  const fetchExchangeRates = async () => {
+    try {
+      setIsLoadingRate(true)
+      // Using base USD to get rates for all currencies
+      const response = await fetch("https://open.er-api.com/v6/latest/USD")
+      if (!response.ok) {
+        throw new Error("Failed to fetch exchange rates")
+      }
+      const data = await response.json()
+      setExchangeRates(data.rates)
+    } catch (error) {
+      console.error("Exchange rate error:", error)
+      toast({
+        title: "Exchange rate error",
+        description: "Could not fetch the latest exchange rates. Using fallback rates.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingRate(false)
+    }
+  }
+
+  // Toggle currency
+  const toggleCurrency = () => {
+    setAppCurrency(prev => prev === "USD" ? "INR" : "USD")
+  }
+
+  // Convert any currency to USD first, then to app currency
+  const convertAmount = (amount: number, sourceCurrency: string = "USD") => {
+    // Normalize currency code to uppercase
+    const normalizedCurrency = sourceCurrency.toUpperCase()
+
+    // If source currency is already app currency, no conversion needed
+    if (normalizedCurrency === appCurrency) return amount
+
+    // Step 1: Convert from source currency to USD
+    let amountInUSD = amount
+    if (normalizedCurrency !== "USD") {
+      // If we have the exchange rate for this currency
+      if (exchangeRates[normalizedCurrency]) {
+        amountInUSD = amount / exchangeRates[normalizedCurrency]
+      } else {
+        console.warn(`Exchange rate for ${normalizedCurrency} not available, using amount as USD`)
+      }
+    }
+
+    // Step 2: Convert from USD to app currency if needed
+    if (appCurrency === "USD") {
+      return amountInUSD
+    } else {
+      return amountInUSD * (exchangeRates[appCurrency] || 75) // Use default rate if not available
+    }
+  }
+
+  // Format currency for display
+  const formatCurrency = (amount: number) => {
+    return appCurrency === "USD"
+      ? `$${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+      : `₹${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+  }
 
   const fetchData = async () => {
     try {
-      const [billingResponse, clientsResponse] = await Promise.all([fetch("/api/bill"), fetch("/api/client")])
+      const [billingResponse, clientsResponse] = await Promise.all([
+        fetch("/api/bill"),
+        fetch("/api/client")
+      ])
 
       if (billingResponse.ok && clientsResponse.ok) {
         const [billingData, clientsData] = await Promise.all([billingResponse.json(), clientsResponse.json()])
@@ -86,27 +155,28 @@ export function BillingAnalytics() {
 
   useEffect(() => {
     fetchData()
+    fetchExchangeRates()
   }, [])
 
-  // Calculate metrics
+  // Calculate metrics with currency conversion
   const totalRevenue = billingRecords.reduce((sum, record) => {
     if (currencyFilter === "all" || record.currency === currencyFilter) {
-      return sum + record.amount
+      return sum + convertAmount(record.amount, record.currency || "USD")
     }
     return sum
   }, 0)
 
   const paidRevenue = billingRecords
     .filter((record) => record.paymentStatus === "paid")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .reduce((sum, record) => sum + convertAmount(record.amount, record.currency || "USD"), 0)
 
   const unpaidRevenue = billingRecords
     .filter((record) => record.paymentStatus === "unpaid")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .reduce((sum, record) => sum + convertAmount(record.amount, record.currency || "USD"), 0)
 
   const overdueRevenue = billingRecords
     .filter((record) => record.paymentStatus === "overdue")
-    .reduce((sum, record) => sum + record.amount, 0)
+    .reduce((sum, record) => sum + convertAmount(record.amount, record.currency || "USD"), 0)
 
   const activeClients = clients.filter((client) => client.status === "active").length
   const totalInvoices = billingRecords.length
@@ -116,7 +186,7 @@ export function BillingAnalytics() {
   const serviceRevenue = billingRecords.reduce(
     (acc, record) => {
       record.servicesBilled?.forEach((service) => {
-        acc[service.service] = (acc[service.service] || 0) + (service.cost || 0)
+        acc[service.service] = (acc[service.service] || 0) + convertAmount((service.cost || 0), record.currency || "USD")
       })
       return acc
     },
@@ -141,16 +211,16 @@ export function BillingAnalytics() {
     .sort((a, b) => new Date(a.billDate || 0).getTime() - new Date(b.billDate || 0).getTime())
     .map((record) => ({
       date: new Date(record.billDate || 0).toLocaleDateString(),
-      amount: record.amount,
+      amount: convertAmount(record.amount, record.currency || "USD"),
       status: record.paymentStatus,
     }))
 
-  // Top clients by revenue
+  // Top clients by revenue with currency conversion
   const clientRevenue = billingRecords.reduce(
     (acc, record) => {
       const client = clients.find((c) => c._id === record.clientId)
       const clientName = client?.companyName || client?.name || "Unknown"
-      acc[clientName] = (acc[clientName] || 0) + record.amount
+      acc[clientName] = (acc[clientName] || 0) + convertAmount(record.amount, record.currency || "USD")
       return acc
     },
     {} as Record<string, number>,
@@ -427,7 +497,7 @@ export function BillingAnalytics() {
               <SelectItem value="revenue">Export Revenue</SelectItem>
             </SelectContent>
           </Select>
-          <Select defaultValue="csv" onValueChange={(value) => setExportFormat(value)}>
+          <Select defaultValue="pdf" onValueChange={(value) => setExportFormat(value)}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Format" />
             </SelectTrigger>
@@ -454,11 +524,19 @@ export function BillingAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <button
+              onClick={toggleCurrency}
+              className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors"
+              title={`Click to toggle to ${appCurrency === "USD" ? "Rupees" : "Dollars"}`}
+            >
+              {appCurrency === "USD" ? <DollarSign size={16} /> : <IndianRupee size={16} />}
+            </button>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">+12.5% from last month</p>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+            <p className="text-xs text-muted-foreground">
+              +12.5% from last month {isLoadingRate && "(Updating rates...)"}
+            </p>
           </CardContent>
         </Card>
 
@@ -493,7 +571,7 @@ export function BillingAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{overdueInvoices}</div>
-            <p className="text-xs text-muted-foreground">${overdueRevenue.toLocaleString()} overdue</p>
+            <p className="text-xs text-muted-foreground">{formatCurrency(overdueRevenue)} overdue</p>
           </CardContent>
         </Card>
       </div>
