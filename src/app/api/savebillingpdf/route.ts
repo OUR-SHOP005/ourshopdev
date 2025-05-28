@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Get client data
     const clientResponse = await fetch(
-      `${process.env.VERCEL_URL || "http://localhost:3000"}/api/client/${billingData.clientId}`,
+      `/api/client/${billingData.clientId}`,
     )
     if (!clientResponse.ok) {
       throw new Error("Failed to fetch client data")
