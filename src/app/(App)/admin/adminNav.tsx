@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,16 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
-  UserCog,
   FileText,
-  MailPlus,
   Globe,
-  Layers,
   Inbox,
+  Layers,
+  MailPlus,
   User,
+  UserCog,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AdminNav() {
   const router = useRouter();
@@ -34,6 +34,12 @@ export default function AdminNav() {
       description: "Manage your portfolios and showcase",
       icon: <Layers className='h-8 w-8' />,
       href: "/admin/portfolios",
+    },
+    {
+      title: "Clients",
+      description: "Manage your clients and invoices",
+      icon: <FileText className='h-8 w-8' />,
+      href: "/admin/client",
     },
     {
       title: "Blog",

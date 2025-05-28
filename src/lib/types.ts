@@ -415,26 +415,28 @@ export const ServiceRequestSchema = ServiceSchema.omit({
 export type ServiceFormData = Omit<IService, "_id" | "createdAt" | "updatedAt">;
 
 // BillingRecord Schema
+export interface IServiceBilled {
+  service: "design" | "development" | "SEO" | "maintenance" | "hosting" | "domain" | "analytics" | "ecommerce" | "other"
+  description?: string
+  cost?: number
+}
+
 export interface IBillingRecord {
-  _id?: string;
-  clientId: mongoose.Types.ObjectId | string;
-  invoiceNumber: string;
-  amount: number;
-  currency: string;
-  servicesBilled: Array<{
-    service: 'design' | 'development' | 'SEO' | 'maintenance' | 'hosting' | 'domain' | 'analytics' | 'ecommerce' | 'other';
-    description: string;
-    cost: number;
-  }>;
-  billDate: Date;
-  dueDate?: Date;
-  paymentStatus: 'paid' | 'unpaid' | 'overdue' | 'cancelled';
-  paymentMethod?: string;
-  transactionId?: string;
-  notes?: string;
-  billPdfUrl: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  _id?: string
+  clientId: string
+  invoiceNumber: string
+  amount: number
+  currency?: string
+  servicesBilled?: IServiceBilled[]
+  billDate?: Date
+  dueDate?: Date
+  paymentStatus?: "paid" | "unpaid" | "overdue" | "cancelled"
+  paymentMethod?: string
+  transactionId?: string
+  notes?: string
+  billPdfUrl: string
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 // Client Schema
