@@ -1,5 +1,5 @@
-import { z } from "zod";
 import mongoose from "mongoose";
+import { z } from "zod";
 
 // Interfaces
 export interface ISEO {
@@ -372,13 +372,13 @@ export interface SitemapEntry {
   id?: string;
   url: string;
   changefreq:
-    | "always"
-    | "hourly"
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "yearly"
-    | "never";
+  | "always"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "never";
   priority: number;
   lastmod?: string;
 }
@@ -498,6 +498,16 @@ export interface IClient {
   // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface IReminderLog extends Document {
+  clientId: mongoose.Schema.Types.ObjectId;
+  email: string;
+  reminderType: string;
+  message: string;
+  sentAt: Date;
+  status: string;
+  error?: string;
 }
 
 // Zod Schemas for BillingRecord and Client

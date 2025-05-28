@@ -10,6 +10,7 @@ import {
   IService,
   IBillingRecord,
   IClient,
+  IReminderLog,
 } from "./types";
 
 const DEFAULT_IMG =
@@ -430,6 +431,45 @@ ClientSchema.index({ companyName: 1 });
 ClientSchema.index({ 'website.url': 1 });
 BillingRecordSchema.index({ clientId: 1, billDate: -1 });
 
+
+const ReminderLogSchema = new mongoose.Schema<IReminderLog>(
+  {
+    clientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    reminderType: {
+      type: String,
+      enum: ['DOMAIN_EXPIRY'],
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    sentAt: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: String,
+      enum: ['SENT', 'FAILED'],
+      required: true,
+    },
+    error: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+
 // Export models
 export const Portfolio =
   mongoose.models.Portfolio ||
@@ -464,3 +504,8 @@ export const Client =
 
 export const BillingRecord =
   mongoose.models.BillingRecord || mongoose.model<IBillingRecord>("BillingRecord", BillingRecordSchema);
+
+  // Check if model is already defined to prevent overwriting during hot reloads
+export const ReminderLog: mongoose.Model<IReminderLog> = 
+    mongoose.models.ReminderLog || 
+    mongoose.model<IReminderLog>('ReminderLog', ReminderLogSchema);
