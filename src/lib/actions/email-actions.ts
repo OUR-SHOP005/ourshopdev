@@ -23,7 +23,7 @@ export async function sendInvoiceReminder(
     }).format(amount)
 
     const { data, error } = await resend.emails.send({
-      from: "billing@yourcompany.com",
+      from: "Invoice Reminder <onboarding@resend.dev>",
       to: clientEmail,
       subject: `Invoice Reminder: ${invoiceNumber}`,
       html: `
