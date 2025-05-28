@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { generateInvoicePDF } from "@/lib/pdf-generator"
 import { v2 as cloudinary } from "cloudinary"
+import { type NextRequest, NextResponse } from "next/server"
 
 // Configure Cloudinary
 cloudinary.config({
@@ -23,32 +23,47 @@ export async function POST(request: NextRequest) {
     const clientData = await clientResponse.json()
 
     // Generate PDF
-    const pdf = generateInvoicePDF(billingData, clientData)
-    const pdfBuffer = Buffer.from(pdf.output("arraybuffer"))
+    let pdfBuffer: Buffer
+    try {
+      const pdf = generateInvoicePDF(billingData, clientData)
+      pdfBuffer = Buffer.from(pdf.output("arraybuffer"))
+      console.log("PDF generated successfully")
+    } catch (error) {
+      console.error("PDF generation error:", error)
+      return NextResponse.json({ error: "Failed to generate PDF: " + (error as Error).message }, { status: 500 })
+    }
 
     // Upload to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: "raw",
-            folder: "invoices",
-            public_id: `invoice-${billingData.invoiceNumber}-${Date.now()}`,
-            format: "pdf",
-          },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          },
-        )
-        .end(pdfBuffer)
-    })
+    try {
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            {
+              resource_type: "raw",
+              folder: "invoices",
+              public_id: `invoice-${billingData.invoiceNumber}-${Date.now()}`,
+              format: "pdf",
+            },
+            (error, result) => {
+              if (error) reject(error)
+              else resolve(result)
+            },
+          )
+          .end(pdfBuffer)
+      })
 
-    const pdfUrl = (uploadResult as any).secure_url
+      const pdfUrl = (uploadResult as any).secure_url
 
-    return NextResponse.json({ pdfUrl }, { status: 200 })
+      console.log("PDF uploaded successfully")
+      return NextResponse.json({ pdfUrl }, { status: 200 })
+
+    } catch (error) {
+
+      console.error("PDF upload error:", error)
+      return NextResponse.json({ error: "Failed to upload PDF: " + (error as Error).message }, { status: 500 })
+    }
   } catch (error) {
     console.error("PDF generation error:", error)
-    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to generate PDF: " + (error as Error).message }, { status: 500 })
   }
 }
