@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
 import { sendBulkReminders } from "@/lib/actions/bulk-email-actions"
 import { sendInvoiceReminder } from "@/lib/actions/email-actions"
 import type { IBillingRecord, IClient } from "@/lib/types"
@@ -49,9 +50,8 @@ import {
 } from "recharts"
 import { ClientEngagementHeatmap } from "./client-engagement-heatmap"
 import { PaymentForecasting } from "./payment-forecasting"
-import { useToast } from "@/hooks/use-toast"
 
-export default function AnalyticsDashboard() {
+export default function BillingAnalytics() {
   const [billingRecords, setBillingRecords] = useState<IBillingRecord[]>([])
   const [clients, setClients] = useState<IClient[]>([])
   const [loading, setLoading] = useState(true)
