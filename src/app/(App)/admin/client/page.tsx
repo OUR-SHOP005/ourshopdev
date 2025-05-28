@@ -1,6 +1,6 @@
 "use client"
 
-import { BillingAnalytics } from "@/components/billing-analytics"
+import {BillingAnalytics} from "@/components/billing-analytics"
 import { BillingForm } from "@/components/billing-form"
 import { BillingTable } from "@/components/billing-table"
 import { ClientForm } from "@/components/client-form"

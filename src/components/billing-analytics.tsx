@@ -51,7 +51,7 @@ import {
 import { ClientEngagementHeatmap } from "./client-engagement-heatmap"
 import { PaymentForecasting } from "./payment-forecasting"
 
-export default function BillingAnalytics() {
+export function BillingAnalytics() {
   const [billingRecords, setBillingRecords] = useState<IBillingRecord[]>([])
   const [clients, setClients] = useState<IClient[]>([])
   const [loading, setLoading] = useState(true)
