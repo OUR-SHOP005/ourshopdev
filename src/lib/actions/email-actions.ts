@@ -30,7 +30,7 @@ export async function sendInvoiceReminder(
     })
 
     // Send the email using our email API
-    const response = await fetch('/api/(helper)/email', {
+    const response = await fetch('/api/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

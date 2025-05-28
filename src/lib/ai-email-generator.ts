@@ -14,7 +14,7 @@ export async function generateEmailContent(template: EmailTemplate, data: any): 
         const prompt = createPrompt(template, data)
 
         // Make request to our AI API
-        const response = await fetch('/api/(helper)/ai', {
+        const response = await fetch('/api/ai', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
