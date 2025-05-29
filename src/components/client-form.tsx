@@ -78,6 +78,8 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
         hostingProvider: formData.get("hostingProvider") as string,
         status: formData.get("websiteStatus") as any,
         mailAddress: formData.get("mailAddress") as string,
+        domainExpiry: formData.get("domainExpiry") ? new Date(formData.get("domainExpiry") as string) : undefined,
+        mailExpiry: formData.get("mailExpiry") ? new Date(formData.get("mailExpiry") as string) : undefined,
       },
       services: services as any[],
       social: socialProfiles,
@@ -300,6 +302,28 @@ export function ClientForm({ onClientAdded }: ClientFormProps) {
                 <Label htmlFor="hostingProvider">Hosting Provider</Label>
                 <Input id="hostingProvider" name="hostingProvider" className={formErrors["website.hostingProvider"] ? "border-destructive" : ""} />
                 {getFieldError("website.hostingProvider")}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="domainExpiry">Domain Expiry</Label>
+                <Input
+                  id="domainExpiry"
+                  name="domainExpiry"
+                  type="date"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  className={formErrors["website.domainExpiry"] ? "border-destructive" : ""}
+                />
+                {getFieldError("website.domainExpiry")}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mailExpiry">Mail Expiry</Label>
+                <Input
+                  id="mailExpiry"
+                  name="mailExpiry"
+                  type="date"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  className={formErrors["website.mailExpiry"] ? "border-destructive" : ""}
+                />
+                {getFieldError("website.mailExpiry")}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="websiteStatus">Website Status</Label>

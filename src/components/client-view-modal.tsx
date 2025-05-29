@@ -187,6 +187,7 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
               <CardContent className="space-y-2">
                 <InfoRow label="URL" value={client.website.url} type="url" />
                 <InfoRow label="Domain Provider" value={client.website.domainProvider} />
+                <InfoRow label="Domain Expiry" value={client.website.domainExpiry ? new Date(client.website.domainExpiry).toLocaleDateString() : undefined} />
                 <InfoRow label="Hosting Provider" value={client.website.hostingProvider} />
                 <InfoRow label="Mail Address" value={client.website.mailAddress} type="email" />
                 {client.website.status && (
